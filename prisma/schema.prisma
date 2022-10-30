@@ -22,13 +22,14 @@ model Schedule {
 
 model ScheduleCrossSubject {
   scheduleId Int
-  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+  schedule   Schedule            @relation(fields: [scheduleId], references: [id])
   subjectId  Int
-  subject    Subject  @relation(fields: [subjectId], references: [id])
-  index      Int
+  teacherId  Int
+  subject    SubjectCrossTeacher @relation(fields: [subjectId, teacherId], references: [subjectId, teacherId])
   cabinetId  Int
-  cabinet    Cabinet  @relation(fields: [cabinetId], references: [id])
-  info       String?  @db.VarChar(25)
+  cabinet    Cabinet             @relation(fields: [cabinetId], references: [id])
+  index      Int
+  info       String?             @db.VarChar(25)
 
   @@id([scheduleId, subjectId])
   @@unique([scheduleId, index])
@@ -50,10 +51,9 @@ model Cabinet {
 }
 
 model Subject {
-  id        Int                    @id @default(autoincrement())
-  name      String                 @unique @db.VarChar(25)
-  schedules ScheduleCrossSubject[]
-  teachers  SubjectCrossTeacher[]
+  id       Int                   @id @default(autoincrement())
+  name     String                @unique @db.VarChar(25)
+  teachers SubjectCrossTeacher[]
 }
 
 model Teacher {
@@ -65,10 +65,11 @@ model Teacher {
 }
 
 model SubjectCrossTeacher {
-  subjectId Int
-  subject   Subject @relation(fields: [subjectId], references: [id])
-  teacherId Int
-  teacher   Teacher @relation(fields: [teacherId], references: [id])
+  subjectId        Int
+  subject          Subject                @relation(fields: [subjectId], references: [id])
+  teacherId        Int
+  teacher          Teacher                @relation(fields: [teacherId], references: [id])
+  scheduleSubjects ScheduleCrossSubject[]
 
   @@id([subjectId, teacherId])
 }
