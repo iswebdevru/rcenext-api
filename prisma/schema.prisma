@@ -10,10 +10,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Schedule {
+  id       Int                    @id @default(autoincrement())
+  isBase   Boolean                @default(false)
+  date     DateTime
+  altText  String?                @db.VarChar(255)
+  groupId  Int
+  group    Group                  @relation(fields: [groupId], references: [id])
+  subjects ScheduleCrossSubject[]
+}
+
+model ScheduleCrossSubject {
+  scheduleId Int
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+  subjectId  Int
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  index      Int
+  cabinetId  Int
+  cabinet    Cabinet  @relation(fields: [cabinetId], references: [id])
+  info       String?  @db.VarChar(25)
+
+  @@id([scheduleId, subjectId])
+  @@unique([scheduleId, index])
+}
+
 model Group {
-  id     Int    @id @default(autoincrement())
-  name   String @db.VarChar(10)
-  course Int
-  index  Int
-  block  Int
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(10)
+  index     Int
+  course    Course
+  block     Block
+  schedules Schedule[]
+}
+
+model Cabinet {
+  id               Int                    @id @default(autoincrement())
+  value            String                 @unique @db.VarChar(25)
+  scheduleSubjects ScheduleCrossSubject[]
+}
+
+model Subject {
+  id        Int                    @id @default(autoincrement())
+  name      String                 @unique @db.VarChar(25)
+  schedules ScheduleCrossSubject[]
+  teachers  SubjectCrossTeacher[]
+}
+
+model Teacher {
+  id         Int                   @id @default(autoincrement())
+  firstName  String                @db.VarChar(255)
+  lastName   String                @db.VarChar(255)
+  patronymic String                @db.VarChar(255)
+  subjects   SubjectCrossTeacher[]
+}
+
+model SubjectCrossTeacher {
+  subjectId Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  teacherId Int
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+
+  @@id([subjectId, teacherId])
+}
+
+enum Block {
+  FIRST
+  SECOND
+  THIRD
+  FOURH
+  FIFTH
+  SIXTH
+}
+
+enum Course {
+  FIRST
+  SECOND
+  THIRD
+  FOURTH
 }

@@ -34,7 +34,7 @@ export class GroupController {
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateGroupDto: UpdateGroupDto,
+    @Body() updateGroupDto: UpdateGroupDto
   ) {
     return this.groupService.update(id, updateGroupDto);
   }
