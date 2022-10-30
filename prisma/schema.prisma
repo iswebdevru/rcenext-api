@@ -39,8 +39,8 @@ model Group {
   id        Int        @id @default(autoincrement())
   name      String     @db.VarChar(10)
   index     Int
-  course    Course
-  block     Block
+  course    Int
+  block     Int
   schedules Schedule[]
 }
 
@@ -72,20 +72,4 @@ model SubjectCrossTeacher {
   scheduleSubjects ScheduleCrossSubject[]
 
   @@id([subjectId, teacherId])
-}
-
-enum Block {
-  FIRST
-  SECOND
-  THIRD
-  FOURH
-  FIFTH
-  SIXTH
-}
-
-enum Course {
-  FIRST
-  SECOND
-  THIRD
-  FOURTH
 }
