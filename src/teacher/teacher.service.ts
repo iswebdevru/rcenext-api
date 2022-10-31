@@ -31,19 +31,34 @@ export class TeacherService {
         );
       }
     }
-    return this.prisma.teacher.findUnique({ where: { id: teacherId } });
+    return this.prisma.teacher.findUnique({
+      where: { id: teacherId },
+      include: {
+        subjects: {
+          select: { subject: true },
+        },
+      },
+    });
   }
 
   async findAll() {
     return this.prisma.teacher.findMany({
-      include: { subjects: true },
+      include: {
+        subjects: {
+          select: { subject: true },
+        },
+      },
     });
   }
 
   async findOne(id: number) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { id },
-      include: { subjects: true },
+      include: {
+        subjects: {
+          select: { subject: true },
+        },
+      },
     });
     if (!teacher) {
       throw new NotFoundException(`Teacher with id=${id} doesn't exist`);
@@ -91,6 +106,13 @@ export class TeacherService {
           firstName,
           lastName,
           patronymic,
+        },
+        include: {
+          subjects: {
+            select: {
+              subject: true,
+            },
+          },
         },
       });
     } catch (e) {

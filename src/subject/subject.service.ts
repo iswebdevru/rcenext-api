@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { NotFoundError } from '@prisma/client/runtime';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
@@ -8,32 +7,59 @@ import { UpdateSubjectDto } from './dto/update-subject.dto';
 export class SubjectService {
   constructor(private prisma: PrismaService) {}
 
-  create(createSubjectDto: CreateSubjectDto) {
-    return 'This action adds a new subject';
+  async create(createSubjectDto: CreateSubjectDto) {
+    return this.prisma.subject.create({
+      data: createSubjectDto,
+      include: {
+        teachers: {
+          select: { teacher: true },
+        },
+      },
+    });
   }
 
   async findAll() {
     return this.prisma.subject.findMany({
-      include: { teachers: true },
+      include: {
+        teachers: {
+          select: { teacher: true },
+        },
+      },
     });
   }
 
   async findOne(id: number) {
     const subject = await this.prisma.subject.findUnique({
       where: { id },
-      include: { teachers: true },
+      include: {
+        teachers: {
+          select: { teacher: true },
+        },
+      },
     });
     if (!subject) {
-      throw new NotFoundError(`Subject with id=${id} doesn't exist`);
+      throw new NotFoundException(`Subject with id=${id} doesn't exist`);
     }
     return subject;
   }
 
-  update(id: number, updateSubjectDto: UpdateSubjectDto) {
-    return `This action updates a #${id} subject`;
+  async update(id: number, updateSubjectDto: UpdateSubjectDto) {
+    try {
+      return await this.prisma.subject.update({
+        where: { id },
+        data: updateSubjectDto,
+      });
+    } catch {
+      throw new NotFoundException(`Subject with id=${id} doesn't exist`);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} subject`;
+  async remove(id: number) {
+    try {
+      await this.prisma.subject.delete({ where: { id } });
+      return `Subject with id=${id} has been removed`;
+    } catch {
+      throw new NotFoundException(`Subject with id=${id} doesn't exist`);
+    }
   }
 }
