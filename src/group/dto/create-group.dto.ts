@@ -1,16 +1,16 @@
 import { Group } from '@prisma/client';
-import { IsEnum, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsNumber, IsString } from 'class-validator';
 
 export class CreateGroupDto implements Omit<Group, 'id'> {
   @IsString()
   name: string;
 
-  @IsNumber()
+  @IsInt()
   course: number;
 
-  @IsNumber()
+  @IsInt()
   index: number;
 
-  @IsNumber()
+  @IsInt()
   block: number;
 }

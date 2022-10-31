@@ -27,7 +27,7 @@ export class TeacherService {
       } catch {
         await this.prisma.teacher.delete({ where: { id: teacherId } });
         throw new NotFoundException(
-          `Subjects with ids=[${subjects.join()}] don't exist`
+          `Subjects with ids=[${subjects}] don't exist`
         );
       }
     }
@@ -95,7 +95,9 @@ export class TeacherService {
       });
     } catch (e) {
       throw new NotFoundException(
-        `Either teacher with id=${teacherId} doesn't exist or subjects with ids=[${subjects?.join()}] don't exist`
+        `Either teacher with id=${teacherId} doesn't exist ${
+          subjects ? `or subjects with ids=[${subjects}] don't exist` : ''
+        }`
       );
     }
   }
