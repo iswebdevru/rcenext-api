@@ -1,5 +1,11 @@
 import { Teacher } from '@prisma/client';
-import { IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateTeacherDto implements Omit<Teacher, 'id'> {
   @IsString()
@@ -10,4 +16,10 @@ export class CreateTeacherDto implements Omit<Teacher, 'id'> {
 
   @IsString()
   patronymic: string;
+
+  @IsArray()
+  @IsInt({ each: true })
+  @ArrayNotEmpty()
+  @IsOptional()
+  subjects?: number[];
 }
