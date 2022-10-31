@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
@@ -7,23 +7,39 @@ import { UpdateTeacherDto } from './dto/update-teacher.dto';
 export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
-  create(createTeacherDto: CreateTeacherDto) {
-    return 'This action adds a new teacher';
+  async create(createTeacherDto: CreateTeacherDto) {
+    return this.prisma.teacher.create({ data: createTeacherDto });
   }
 
-  findAll() {
+  async findAll() {
     return this.prisma.teacher.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} teacher`;
+  async findOne(id: number) {
+    const teacher = await this.prisma.teacher.findUnique({ where: { id } });
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with id=${id} doesn't exist`);
+    }
+    return teacher;
   }
 
-  update(id: number, updateTeacherDto: UpdateTeacherDto) {
-    return `This action updates a #${id} teacher`;
+  async update(id: number, updateTeacherDto: UpdateTeacherDto) {
+    try {
+      return await this.prisma.teacher.update({
+        where: { id },
+        data: updateTeacherDto,
+      });
+    } catch {
+      throw new NotFoundException(`Teacher with id=${id} doesn't exist`);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} teacher`;
+  async remove(id: number) {
+    try {
+      await this.prisma.teacher.delete({ where: { id }, select: null });
+      return `Teacher with id=${id} has been removed`;
+    } catch {
+      throw new NotFoundException(`Teacher with id=${id} doesn't exist`);
+    }
   }
 }

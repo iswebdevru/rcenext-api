@@ -7,17 +7,16 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 export class GroupService {
   constructor(private prisma: PrismaService) {}
 
-  create(createGroupDto: CreateGroupDto) {
+  async create(createGroupDto: CreateGroupDto) {
     return this.prisma.group.create({ data: createGroupDto });
   }
 
-  findAll() {
+  async findAll() {
     return this.prisma.group.findMany();
   }
 
   async findOne(id: number) {
     const group = await this.prisma.group.findUnique({ where: { id } });
-
     if (!group) {
       throw new NotFoundException(`Group with id=${id} doesn't exist`);
     }
@@ -37,11 +36,8 @@ export class GroupService {
 
   async remove(id: number) {
     try {
-      await this.prisma.group.delete({
-        where: { id },
-        select: null,
-      });
-      return `Group with id=${id} removed`;
+      await this.prisma.group.delete({ where: { id }, select: null });
+      return `Group with id=${id} has been removed`;
     } catch {
       throw new NotFoundException(`Group with id=${id} doesn't exist`);
     }
