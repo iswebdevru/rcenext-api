@@ -19,7 +19,6 @@ export class CreateTeacherDto implements Omit<Teacher, 'id'> {
 
   @IsArray()
   @IsInt({ each: true })
-  @ArrayNotEmpty()
   @IsOptional()
   subjects?: number[];
 }

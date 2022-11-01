@@ -16,19 +16,17 @@ export class TeacherService {
         patronymic,
       },
     });
-    if (subjects) {
-      try {
+    if (subjects && subjects.length) {
+      const subjectsCount = await this.prisma.subject.count({
+        where: { id: { in: subjects } },
+      });
+      if (subjectsCount === subjects.length) {
         await this.prisma.subjectCrossTeacher.createMany({
           data: subjects.map(subjectId => ({
             teacherId,
             subjectId,
           })),
         });
-      } catch {
-        await this.prisma.teacher.delete({ where: { id: teacherId } });
-        throw new NotFoundException(
-          `Subjects with ids=[${subjects}] don't exist`
-        );
       }
     }
     return this.prisma.teacher.findUnique({
@@ -67,9 +65,19 @@ export class TeacherService {
   }
 
   async update(teacherId: number, updateTeacherDto: UpdateTeacherDto) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id: teacherId },
+    });
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with id=${teacherId} doesn't exist`);
+    }
     const { firstName, lastName, patronymic, subjects } = updateTeacherDto;
-    try {
-      if (subjects) {
+
+    if (subjects) {
+      const subjectsCount = await this.prisma.subject.count({
+        where: { id: { in: subjects } },
+      });
+      if (subjectsCount === subjects.length) {
         const oldSubjects = R.pluck(
           'subjectId',
           await this.prisma.subjectCrossTeacher.findMany({
@@ -100,28 +108,22 @@ export class TeacherService {
           });
         }
       }
-      return await this.prisma.teacher.update({
-        where: { id: teacherId },
-        data: {
-          firstName,
-          lastName,
-          patronymic,
-        },
-        include: {
-          subjects: {
-            select: {
-              subject: true,
-            },
+    }
+    return await this.prisma.teacher.update({
+      where: { id: teacherId },
+      data: {
+        firstName,
+        lastName,
+        patronymic,
+      },
+      include: {
+        subjects: {
+          select: {
+            subject: true,
           },
         },
-      });
-    } catch (e) {
-      throw new NotFoundException(
-        `Either teacher with id=${teacherId} doesn't exist ${
-          subjects ? `or subjects with ids=[${subjects}] don't exist` : ''
-        }`
-      );
-    }
+      },
+    });
   }
 
   async remove(id: number) {
