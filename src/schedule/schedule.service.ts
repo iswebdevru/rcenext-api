@@ -1,15 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { floorDate } from 'src/utils';
+import { BASE_DAYS } from './constants';
 import { CreateBaseScheduleDto } from './dto/create-base-schedule.dto';
+import { FindScheduleDto } from './dto/find-schedule.dto';
 
 @Injectable()
 export class ScheduleService {
   constructor(private prisma: PrismaService) {}
 
-  async findAllBase(date?: Date) {
+  async findAllBase({ type, day }: FindScheduleDto) {
     return this.prisma.schedule.findMany({
-      where: { date },
+      where: { date: BASE_DAYS[type][day] },
       include: {
         group: true,
         subjects: true,
@@ -18,12 +19,12 @@ export class ScheduleService {
   }
 
   async createBase(createBaseScheduleDto: CreateBaseScheduleDto) {
-    const { date, groupId, altText, subjects } = createBaseScheduleDto;
+    const { groupId, altText, subjects, day, type } = createBaseScheduleDto;
     let createdScheduleId = -1;
     try {
       const { id: scheduleId } = await this.prisma.schedule.create({
         data: {
-          date: floorDate(new Date(date)),
+          date: BASE_DAYS[type][day],
           altText,
           group: { connect: { id: groupId } },
           isBase: true,

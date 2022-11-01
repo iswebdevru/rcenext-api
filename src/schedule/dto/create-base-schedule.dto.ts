@@ -2,13 +2,14 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
-  IsDateString,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
+import { BASE_DAYS, ScheduleDay, ScheduleType } from '../constants';
 import { CreateScheduleSubjectDto } from './create-schedule-subject.dto';
 
 export class CreateBaseScheduleDto {
@@ -20,8 +21,11 @@ export class CreateBaseScheduleDto {
   @IsOptional()
   altText?: string;
 
-  @IsDateString()
-  date: string;
+  @IsIn(Object.keys(BASE_DAYS['ЧИСЛИТЕЛЬ']))
+  day: ScheduleDay;
+
+  @IsIn(Object.keys(BASE_DAYS))
+  type: ScheduleType;
 
   @IsArray()
   @ArrayNotEmpty()
