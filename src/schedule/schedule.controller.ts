@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { CreateBaseScheduleDto } from './dto/create-base-schedule.dto';
 import { FindScheduleDto } from './dto/find-schedule.dto';
 import { ScheduleService } from './schedule.service';
@@ -27,6 +19,6 @@ export class ScheduleController {
 
   @Get('changes')
   findAllChanges() {
-    return 'Здесь будут изменения';
+    return this.scheduleService.findAllChanges();
   }
 }

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { floorDate } from 'src/utils';
 import { BASE_DAYS } from './constants';
 import { CreateBaseScheduleDto } from './dto/create-base-schedule.dto';
 import { FindScheduleDto } from './dto/find-schedule.dto';
@@ -10,7 +11,7 @@ export class ScheduleService {
 
   async findAllBase({ type, day }: FindScheduleDto) {
     return this.prisma.schedule.findMany({
-      where: { date: BASE_DAYS[type][day] },
+      where: { date: BASE_DAYS[type][day], isBase: true },
       include: {
         group: true,
         subjects: true,
@@ -74,5 +75,12 @@ export class ScheduleService {
 2: Schedule for specified date and group already exists. Use PATCH method instead'`
       );
     }
+  }
+
+  async findAllChanges(date?: string) {
+    const day = floorDate(date ? new Date(date) : new Date());
+    return this.prisma.schedule.findMany({
+      where: { isBase: false, date: day },
+    });
   }
 }
