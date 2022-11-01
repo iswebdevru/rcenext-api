@@ -11,13 +11,16 @@ datasource db {
 }
 
 model Schedule {
-  id       Int                    @id @default(autoincrement())
-  isBase   Boolean                @default(false)
-  date     DateTime
-  altText  String?                @db.VarChar(255)
-  groupId  Int
-  group    Group                  @relation(fields: [groupId], references: [id])
-  subjects ScheduleCrossSubject[]
+  id        Int                    @id @default(autoincrement())
+  isBase    Boolean                @default(false)
+  date      DateTime
+  updatedAt DateTime               @updatedAt
+  altText   String?                @db.VarChar(255)
+  groupId   Int
+  group     Group                  @relation(fields: [groupId], references: [id])
+  subjects  ScheduleCrossSubject[]
+
+  @@unique([groupId, date])
 }
 
 model ScheduleCrossSubject {
