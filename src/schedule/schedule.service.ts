@@ -9,6 +9,7 @@ import { CreateBaseScheduleDto } from './dto/create-base-schedule.dto';
 import { FindBaseScheduleDto } from './dto/find-all-base-schedule.dto';
 import { FindScheduleDto } from './dto/find-schedule-changes.dto';
 import { floorDateJSON, getScheduleBaseDate } from './schedule.utils';
+import { CreateScheduleChangesDto } from './dto/create-schedule-changes.dto';
 
 interface AbstractFindBaseScheduleOptions {
   isBase: boolean;
@@ -117,16 +118,20 @@ export class ScheduleService {
     }
   }
 
-  async createBase(createBaseScheduleDto: CreateBaseScheduleDto) {
-    const { groupId, altText, subjects, day, type } = createBaseScheduleDto;
+  private async _abstractCreate(
+    isBase: boolean,
+    createScheduleDto: CreateScheduleChangesDto
+  ) {
+    const { groupId, altText, subjects, date } = createScheduleDto;
+
     let createdScheduleId = -1;
     try {
       const { id: scheduleId } = await this.prisma.schedule.create({
         data: {
-          date: BASE_DAYS[type][day],
+          date,
           altText,
           group: { connect: { id: groupId } },
-          isBase: true,
+          isBase,
         },
       });
       createdScheduleId = scheduleId;
@@ -173,5 +178,14 @@ export class ScheduleService {
 2: Schedule for specified date and group already exists. Use PATCH method instead'`
       );
     }
+  }
+
+  async createBase(createBaseScheduleDto: CreateBaseScheduleDto) {
+    const { day, type, ...rest } = createBaseScheduleDto;
+    return this._abstractCreate(true, { date: BASE_DAYS[type][day], ...rest });
+  }
+
+  async createChanges(createScheduleChangesDto: CreateScheduleChangesDto) {
+    return this._abstractCreate(false, createScheduleChangesDto);
   }
 }
