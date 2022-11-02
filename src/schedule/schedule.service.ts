@@ -10,13 +10,24 @@ import { FindBaseScheduleDto } from './dto/find-all-base-schedule.dto';
 import { FindScheduleDto } from './dto/find-schedule-changes.dto';
 import { floorDateJSON, getScheduleBaseDate } from './schedule.utils';
 
+interface AbstractFindBaseScheduleOptions {
+  isBase: boolean;
+  date: string;
+}
+
+interface AbstractFindScheduleChangesOptions {
+  isBase: boolean;
+  date: string;
+  groupId: number;
+}
+
 @Injectable()
 export class ScheduleService {
   constructor(private prisma: PrismaService) {}
 
-  private async abstractFindAll(isBase: boolean, date: string) {
+  private async abstractFindAll(options: AbstractFindBaseScheduleOptions) {
     return this.prisma.schedule.findMany({
-      where: { isBase, date },
+      where: options,
       include: { group: true, subjects: true },
     });
   }
@@ -25,14 +36,20 @@ export class ScheduleService {
    * @returns Основное расписание для всех групп на указанный день
    */
   async findAllBase({ type, day }: FindBaseScheduleDto) {
-    return this.abstractFindAll(true, BASE_DAYS[type][day]);
+    return this.abstractFindAll({
+      isBase: true,
+      date: BASE_DAYS[type][day],
+    });
   }
 
   /**
    * @returns Изменения в расписании для всех групп на указанный день
    */
   async findAllChanges({ date }: FindScheduleDto) {
-    return this.abstractFindAll(false, floorDateJSON(date));
+    return this.abstractFindAll({
+      isBase: false,
+      date: floorDateJSON(date),
+    });
   }
 
   /**
@@ -53,18 +70,15 @@ export class ScheduleService {
     return [...schedulesWithNoChanges, ...changes];
   }
 
-  private async abstractFindOne(
-    isBase: boolean,
-    groupId: number,
-    date: string,
-    errorMessage: string
-  ) {
+  private async abstractFindOne(options: AbstractFindScheduleChangesOptions) {
     const schedule = await this.prisma.schedule.findFirst({
-      where: { isBase, date, groupId },
+      where: options,
       include: { group: true, subjects: true },
     });
     if (!schedule) {
-      throw new NotFoundException(errorMessage);
+      throw new NotFoundException(
+        `Schedule with specified groupId and/or date doesn't exist`
+      );
     }
     return schedule;
   }
@@ -73,24 +87,22 @@ export class ScheduleService {
    * @returns Основное расписание на указанный день для указанной группы
    */
   async findOneBase(groupId: number, { type, day }: FindBaseScheduleDto) {
-    return this.abstractFindOne(
-      true,
+    return this.abstractFindOne({
+      isBase: true,
+      date: BASE_DAYS[type][day],
       groupId,
-      BASE_DAYS[type][day],
-      `Schedule with specified groupId and/or date doesn't exist`
-    );
+    });
   }
 
   /**
    * @returns Изменения в расписании на указанный день для указанной группы
    */
   async findOneChanges(groupId: number, { date }: FindScheduleDto) {
-    return this.abstractFindOne(
-      false,
+    return this.abstractFindOne({
+      isBase: false,
+      date: floorDateJSON(date),
       groupId,
-      floorDateJSON(date),
-      `Schedule changes for specified group and/or date don't exist`
-    );
+    });
   }
 
   /**
