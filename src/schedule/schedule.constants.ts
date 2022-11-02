@@ -17,5 +17,15 @@ export const BASE_DAYS = {
   } as const,
 } as const;
 
+export const BASE_DAYS_MAP = [
+  'ПН',
+  'ПН',
+  'ВТ',
+  'СР',
+  'ЧТ',
+  'ПТ',
+  'СБ',
+] as const;
+
 export type ScheduleType = keyof typeof BASE_DAYS;
 export type ScheduleDay = keyof typeof BASE_DAYS['ЧИСЛИТЕЛЬ'];

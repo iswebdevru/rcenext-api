@@ -9,7 +9,7 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { BASE_DAYS, ScheduleDay, ScheduleType } from '../constants';
+import { BASE_DAYS, ScheduleDay, ScheduleType } from '../schedule.constants';
 import { CreateScheduleSubjectDto } from './create-schedule-subject.dto';
 
 export class CreateBaseScheduleDto {
