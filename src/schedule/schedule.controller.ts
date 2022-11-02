@@ -1,15 +1,19 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
 import { CreateBaseScheduleDto } from './dto/create-base-schedule.dto';
+import { CreateScheduleChangesDto } from './dto/create-schedule-changes.dto';
 import { FindBaseScheduleDto } from './dto/find-all-base-schedule.dto';
 import { FindScheduleDto } from './dto/find-schedule-changes.dto';
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { ScheduleService } from './schedule.service';
 
 @Controller('schedules')
@@ -21,12 +25,25 @@ export class ScheduleController {
     return this.scheduleService.findAll(findScheduleDto);
   }
 
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.scheduleService.remove(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateScheduleDto: UpdateScheduleDto
+  ) {
+    return this.scheduleService.update(id, updateScheduleDto);
+  }
+
   @Get('group/:groupId')
-  findOne(
+  findOneForGroup(
     @Param('groupId', ParseIntPipe) groupId: number,
     @Query() findScheduleDto: FindScheduleDto
   ) {
-    return this.scheduleService.findOne(groupId, findScheduleDto);
+    return this.scheduleService.findOneForGroup(groupId, findScheduleDto);
   }
 
   @Get('base')
@@ -35,11 +52,14 @@ export class ScheduleController {
   }
 
   @Get('base/group/:groupId')
-  findOneBase(
+  findOneBaseForGroup(
     @Param('groupId', ParseIntPipe) groupId: number,
     @Query() findBaseScheduleDto: FindBaseScheduleDto
   ) {
-    return this.scheduleService.findOneBase(groupId, findBaseScheduleDto);
+    return this.scheduleService.findOneBaseForGroup(
+      groupId,
+      findBaseScheduleDto
+    );
   }
 
   @Post('base')
@@ -53,10 +73,18 @@ export class ScheduleController {
   }
 
   @Get('changes/group/:groupId')
-  findOneChanges(
+  findOneChangesForGroup(
     @Param('groupId', ParseIntPipe) groupId: number,
     @Query() findScheduleDto: FindScheduleDto
   ) {
-    return this.scheduleService.findOneChanges(groupId, findScheduleDto);
+    return this.scheduleService.findOneChangesForGroup(
+      groupId,
+      findScheduleDto
+    );
+  }
+
+  @Post('changes')
+  createChanges(@Body() createScheduleChangesDto: CreateScheduleChangesDto) {
+    return this.scheduleService.createChanges(createScheduleChangesDto);
   }
 }

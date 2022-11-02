@@ -10,6 +10,7 @@ import { FindBaseScheduleDto } from './dto/find-all-base-schedule.dto';
 import { FindScheduleDto } from './dto/find-schedule-changes.dto';
 import { floorDateJSON, getScheduleBaseDate } from './schedule.utils';
 import { CreateScheduleChangesDto } from './dto/create-schedule-changes.dto';
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
 
 interface AbstractFindBaseScheduleOptions {
   isBase: boolean;
@@ -26,7 +27,7 @@ interface AbstractFindScheduleChangesOptions {
 export class ScheduleService {
   constructor(private prisma: PrismaService) {}
 
-  private async abstractFindAll(options: AbstractFindBaseScheduleOptions) {
+  private async _abstractFindAll(options: AbstractFindBaseScheduleOptions) {
     return this.prisma.schedule.findMany({
       where: options,
       include: { group: true, subjects: true },
@@ -37,7 +38,7 @@ export class ScheduleService {
    * @returns Основное расписание для всех групп на указанный день
    */
   async findAllBase({ type, day }: FindBaseScheduleDto) {
-    return this.abstractFindAll({
+    return this._abstractFindAll({
       isBase: true,
       date: BASE_DAYS[type][day],
     });
@@ -47,7 +48,7 @@ export class ScheduleService {
    * @returns Изменения в расписании для всех групп на указанный день
    */
   async findAllChanges({ date }: FindScheduleDto) {
-    return this.abstractFindAll({
+    return this._abstractFindAll({
       isBase: false,
       date: floorDateJSON(date),
     });
@@ -71,7 +72,9 @@ export class ScheduleService {
     return [...schedulesWithNoChanges, ...changes];
   }
 
-  private async abstractFindOne(options: AbstractFindScheduleChangesOptions) {
+  private async _abstractFindOneForGroup(
+    options: AbstractFindScheduleChangesOptions
+  ) {
     const schedule = await this.prisma.schedule.findFirst({
       where: options,
       include: { group: true, subjects: true },
@@ -87,8 +90,11 @@ export class ScheduleService {
   /**
    * @returns Основное расписание на указанный день для указанной группы
    */
-  async findOneBase(groupId: number, { type, day }: FindBaseScheduleDto) {
-    return this.abstractFindOne({
+  async findOneBaseForGroup(
+    groupId: number,
+    { type, day }: FindBaseScheduleDto
+  ) {
+    return this._abstractFindOneForGroup({
       isBase: true,
       date: BASE_DAYS[type][day],
       groupId,
@@ -98,8 +104,8 @@ export class ScheduleService {
   /**
    * @returns Изменения в расписании на указанный день для указанной группы
    */
-  async findOneChanges(groupId: number, { date }: FindScheduleDto) {
-    return this.abstractFindOne({
+  async findOneChangesForGroup(groupId: number, { date }: FindScheduleDto) {
+    return this._abstractFindOneForGroup({
       isBase: false,
       date: floorDateJSON(date),
       groupId,
@@ -109,12 +115,12 @@ export class ScheduleService {
   /**
    * @returns Расписание с учетом изменений для указанной группы
    */
-  async findOne(groupId: number, changesParams: FindScheduleDto) {
+  async findOneForGroup(groupId: number, changesParams: FindScheduleDto) {
     try {
-      return await this.findOneChanges(groupId, changesParams);
+      return await this.findOneChangesForGroup(groupId, changesParams);
     } catch {
       const baseParams = getScheduleBaseDate(new Date(changesParams.date));
-      return this.findOneBase(groupId, baseParams);
+      return this.findOneBaseForGroup(groupId, baseParams);
     }
   }
 
@@ -186,6 +192,70 @@ export class ScheduleService {
   }
 
   async createChanges(createScheduleChangesDto: CreateScheduleChangesDto) {
-    return this._abstractCreate(false, createScheduleChangesDto);
+    return this._abstractCreate(false, {
+      ...createScheduleChangesDto,
+      date: floorDateJSON(createScheduleChangesDto.date),
+    });
+  }
+
+  async remove(id: number) {
+    try {
+      return await this.prisma.schedule.delete({ where: { id } });
+    } catch {
+      throw new NotFoundException(`Schedule with id=${id} doesn't exist`);
+    }
+  }
+
+  async update(scheduleId: number, { altText, subjects }: UpdateScheduleDto) {
+    if (altText) {
+      try {
+        await this.prisma.schedule.update({
+          where: { id: scheduleId },
+          data: { altText },
+        });
+      } catch {
+        throw new NotFoundException(
+          `Schedule with id=${scheduleId} doesn't exist`
+        );
+      }
+    }
+    if (subjects) {
+      try {
+        await this.prisma.scheduleCrossSubject.deleteMany({
+          where: { scheduleId },
+        });
+        await Promise.all(
+          subjects.map(subject => {
+            return this.prisma.scheduleCrossSubject.create({
+              data: {
+                schedule: { connect: { id: scheduleId } },
+                index: subject.index,
+                cabinet: {
+                  connectOrCreate: {
+                    where: { value: subject.cabinet },
+                    create: { value: subject.cabinet },
+                  },
+                },
+                subject: {
+                  connect: {
+                    subjectId_teacherId: {
+                      subjectId: subject.subjectId,
+                      teacherId: subject.teacherId,
+                    },
+                  },
+                },
+                info: subject.info,
+              },
+            });
+          })
+        );
+      } catch {
+        throw new BadRequestException(`Some data don't exist in database`);
+      }
+    }
+    return this.prisma.schedule.findUnique({
+      where: { id: scheduleId },
+      include: { subjects: true, group: true },
+    });
   }
 }
