@@ -37,7 +37,9 @@ export class GroupService {
   async remove(id: number) {
     try {
       await this.prisma.group.delete({ where: { id }, select: null });
-      return `Group with id=${id} has been removed`;
+      return {
+        message: `Group with id=${id} has been removed`,
+      };
     } catch {
       throw new NotFoundException(`Group with id=${id} doesn't exist`);
     }

@@ -57,7 +57,7 @@ export class SubjectService {
   async remove(id: number) {
     try {
       await this.prisma.subject.delete({ where: { id } });
-      return `Subject with id=${id} has been removed`;
+      return { message: `Subject with id=${id} has been removed` };
     } catch {
       throw new NotFoundException(`Subject with id=${id} doesn't exist`);
     }

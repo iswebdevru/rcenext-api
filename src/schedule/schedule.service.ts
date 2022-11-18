@@ -200,7 +200,10 @@ export class ScheduleService {
 
   async remove(id: number) {
     try {
-      return await this.prisma.schedule.delete({ where: { id } });
+      await this.prisma.schedule.delete({ where: { id } });
+      return {
+        message: `Schedule with id=${id} has been removed`,
+      };
     } catch {
       throw new NotFoundException(`Schedule with id=${id} doesn't exist`);
     }

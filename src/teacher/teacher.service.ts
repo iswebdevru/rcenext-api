@@ -128,8 +128,13 @@ export class TeacherService {
 
   async remove(id: number) {
     try {
-      await this.prisma.teacher.delete({ where: { id }, select: null });
-      return `Teacher with id=${id} has been removed`;
+      await this.prisma.teacher.delete({
+        where: { id },
+        select: null,
+      });
+      return {
+        message: `Teacher with id=${id} has been removed`,
+      };
     } catch {
       throw new NotFoundException(`Teacher with id=${id} doesn't exist`);
     }
