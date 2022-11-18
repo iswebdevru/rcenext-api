@@ -17,7 +17,7 @@ model Schedule {
   updatedAt DateTime               @updatedAt
   altText   String?                @db.VarChar(255)
   groupId   Int
-  group     Group                  @relation(fields: [groupId], references: [id])
+  group     Group                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   subjects  ScheduleCrossSubject[]
 
   @@unique([groupId, date])
@@ -25,12 +25,12 @@ model Schedule {
 
 model ScheduleCrossSubject {
   scheduleId Int
-  schedule   Schedule            @relation(fields: [scheduleId], references: [id])
+  schedule   Schedule            @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   subjectId  Int
   teacherId  Int
-  subject    SubjectCrossTeacher @relation(fields: [subjectId, teacherId], references: [subjectId, teacherId])
+  subject    SubjectCrossTeacher @relation(fields: [subjectId, teacherId], references: [subjectId, teacherId], onDelete: Cascade)
   cabinetId  Int
-  cabinet    Cabinet             @relation(fields: [cabinetId], references: [id])
+  cabinet    Cabinet             @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
   index      Int
   info       String?             @db.VarChar(25)
 
@@ -69,9 +69,9 @@ model Teacher {
 
 model SubjectCrossTeacher {
   subjectId        Int
-  subject          Subject                @relation(fields: [subjectId], references: [id])
+  subject          Subject                @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   teacherId        Int
-  teacher          Teacher                @relation(fields: [teacherId], references: [id])
+  teacher          Teacher                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   scheduleSubjects ScheduleCrossSubject[]
 
   @@id([subjectId, teacherId])
