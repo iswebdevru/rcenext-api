@@ -46,6 +46,7 @@ export class TeacherService {
           select: { subject: true },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

@@ -14,11 +14,12 @@ model Schedule {
   id        Int                    @id @default(autoincrement())
   isBase    Boolean                @default(false)
   date      DateTime
-  updatedAt DateTime               @updatedAt
   altText   String?                @db.VarChar(255)
   groupId   Int
   group     Group                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   subjects  ScheduleCrossSubject[]
+  updatedAt DateTime               @updatedAt
+  createdAt DateTime               @default(now())
 
   @@unique([groupId, date])
 }
@@ -33,6 +34,8 @@ model ScheduleCrossSubject {
   cabinet    Cabinet             @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
   index      Int
   info       String?             @db.VarChar(25)
+  updatedAt  DateTime            @updatedAt
+  createdAt  DateTime            @default(now())
 
   @@id([scheduleId, subjectId])
   @@unique([scheduleId, index])
@@ -45,18 +48,24 @@ model Group {
   course    Int
   block     Int
   schedules Schedule[]
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
 }
 
 model Cabinet {
   id               Int                    @id @default(autoincrement())
   value            String                 @unique @db.VarChar(25)
   scheduleSubjects ScheduleCrossSubject[]
+  updatedAt        DateTime               @updatedAt
+  createdAt        DateTime               @default(now())
 }
 
 model Subject {
-  id       Int                   @id @default(autoincrement())
-  name     String                @unique @db.VarChar(25)
-  teachers SubjectCrossTeacher[]
+  id        Int                   @id @default(autoincrement())
+  name      String                @unique @db.VarChar(25)
+  teachers  SubjectCrossTeacher[]
+  updatedAt DateTime              @updatedAt
+  createdAt DateTime              @default(now())
 }
 
 model Teacher {
@@ -65,6 +74,8 @@ model Teacher {
   lastName   String                @db.VarChar(255)
   patronymic String                @db.VarChar(255)
   subjects   SubjectCrossTeacher[]
+  updatedAt  DateTime              @updatedAt
+  createdAt  DateTime              @default(now())
 }
 
 model SubjectCrossTeacher {
@@ -73,6 +84,8 @@ model SubjectCrossTeacher {
   teacherId        Int
   teacher          Teacher                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   scheduleSubjects ScheduleCrossSubject[]
+  updatedAt        DateTime               @updatedAt
+  createdAt        DateTime               @default(now())
 
   @@id([subjectId, teacherId])
 }

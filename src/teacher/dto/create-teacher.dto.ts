@@ -1,4 +1,3 @@
-import { Teacher } from '@prisma/client';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -7,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class CreateTeacherDto implements Omit<Teacher, 'id'> {
+export class CreateTeacherDto {
   @IsString()
   firstName: string;
 
