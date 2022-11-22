@@ -3,9 +3,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import * as R from 'rambda';
+import { Utils } from 'src/utils/utils';
+import { pluck } from 'rambda';
 @Injectable()
 export class TeacherService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private utils: Utils) {}
 
   async create(createTeacherDto: CreateTeacherDto) {
     const { firstName, lastName, patronymic, subjects } = createTeacherDto;
@@ -65,58 +67,32 @@ export class TeacherService {
     return teacher;
   }
 
-  async update(teacherId: number, updateTeacherDto: UpdateTeacherDto) {
-    const teacher = await this.prisma.teacher.findUnique({
-      where: { id: teacherId },
-    });
-    if (!teacher) {
-      throw new NotFoundException(`Teacher with id=${teacherId} doesn't exist`);
-    }
-    const { firstName, lastName, patronymic, subjects } = updateTeacherDto;
-
+  async update(
+    teacherId: number,
+    { subjects, ...updateData }: UpdateTeacherDto
+  ) {
     if (subjects) {
-      const subjectsCount = await this.prisma.subject.count({
-        where: { id: { in: subjects } },
-      });
-      if (subjectsCount === subjects.length) {
-        const oldSubjects = R.pluck(
+      const [removedSubjects, addedSubjects] = this.utils.distributeItems(
+        pluck(
           'subjectId',
           await this.prisma.subjectCrossTeacher.findMany({
-            where: { teacherId: teacherId },
-            select: { subjectId: true },
+            where: { teacherId },
           })
-        );
-        const recordsToDelete = oldSubjects.filter(
-          sId => !subjects.includes(sId)
-        );
-        if (recordsToDelete.length) {
-          await this.prisma.subjectCrossTeacher.deleteMany({
-            where: {
-              teacherId,
-              subjectId: {
-                in: recordsToDelete,
-              },
-            },
-          });
-        }
-        const recordsToAdd = subjects.filter(sId => !oldSubjects.includes(sId));
-        if (recordsToAdd.length) {
-          await this.prisma.subjectCrossTeacher.createMany({
-            data: recordsToAdd.map(subjectId => ({
-              teacherId,
-              subjectId,
-            })),
-          });
-        }
-      }
+        ),
+        subjects
+      );
+      await Promise.all([
+        this.prisma.subjectCrossTeacher.deleteMany({
+          where: { subjectId: { in: removedSubjects } },
+        }),
+        this.prisma.subjectCrossTeacher.createMany({
+          data: addedSubjects.map(subjectId => ({ teacherId, subjectId })),
+        }),
+      ]);
     }
     return await this.prisma.teacher.update({
       where: { id: teacherId },
-      data: {
-        firstName,
-        lastName,
-        patronymic,
-      },
+      data: updateData,
       include: {
         subjects: {
           select: {
